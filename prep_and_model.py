@@ -12,6 +12,9 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.linear_model import LogisticRegression
+from imblearn.over_sampling import RandomOverSampler, SMOTE
+from imblearn.under_sampling import RandomUnderSampler, NearMiss
+
 
 stroke_results = {'knn': '', 
                     'decision_trees': '',
@@ -102,6 +105,10 @@ plt.show()
 pca = PCA(n_components = 0.95)
 pca.fit(df)
 df = pd.DataFrame(pca.transform(df))
+
+
+
+
 # print(df.head(3))
 # After PCA, the number of dimension is reduced to 8(from 15)
 
@@ -109,19 +116,22 @@ df = pd.DataFrame(pca.transform(df))
 
 # Split data into train and test sets with 80% of data as train set
 
+
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.25, random_state=0)
-mm_scalar = MinMaxScaler()
-X_train_scaled = mm_scalar.fit_transform(X_train)
-X_test_scaled = mm_scalar.fit_transform(X_test)
+# mm_scalar = MinMaxScaler()
+# X_train_scaled = mm_scalar.fit_transform(X_train)
+# X_test_scaled = mm_scalar.fit_transform(X_test)
+ros = RandomOverSampler(random_state=42)
+X_train_scaled, y_train_scaled= ros.fit_resample(X_train, y_train)
 
 # Function to fit classifier and print accuracy score
-def modelAll(classifier, classifier_name, X_train = X_train_scaled, y_train = y_train,
-                             X_test = X_test_scaled, y_test = y_test):
+def modelAll(classifier, classifier_name, X_train = X_train_scaled, y_train = y_train_scaled,
+                             X_test = X_test, y_test = y_test):
     # Fit classifier
     classifier.fit(X_train, np.ravel(y_train))
     
     # Predict testing set using the trained model
-    y_pred = classifier.predict(X_test_scaled)
+    y_pred = classifier.predict(X_test)
     # df.assign(heart_disease=y_pred)
     print("Model: ",type(classifier).__name__)
     print("Test Data Accuracy: %0.2f" % accuracy_score(y_test,y_pred))
@@ -139,7 +149,7 @@ decision_trees_classifier = DecisionTreeClassifier()
 knn_classifier = KNeighborsClassifier(n_neighbors = round(math.sqrt(X_train.size)))
 
 #Initialize Logistic regression classifier
-logistic_regression_classifier = LogisticRegression(solver='lbfgs', max_iter=100)
+logistic_regression_classifier = LogisticRegression(solver='lbfgs', max_iter=1000)
 
 # # Fit Adaboost Classifier
 modelAll(adaboost_classifier, 'adaboost')
